@@ -55,8 +55,11 @@ def copy_image(
     additional_dest_tags: list[str] = (),
     dry_run: bool = False,
 ):
-    dkr = DockerClient.from_env()
-    dkr.ping()
+    try:
+        dkr = DockerClient.from_env()
+        dkr.ping()
+    except Exception as e:
+        raise click.ClickException(f"Failed to connect to Docker: {e}") from e
     source_repo = get_repo(source_repo_spec)
     dest_repo = get_repo(dest_repo_spec)
     images = source_repo.get_images()
