@@ -45,6 +45,11 @@ from satamanosturi.repos import get_repo
     default=False,
     help="Don't actually push the tagged images",
 )
+@click.option(
+    "--confirm/--no-confirm",
+    default=False,
+    help="Confirm interactively before pushing",
+)
 def copy_image(
     *,
     source_repo_spec: str,
@@ -54,6 +59,7 @@ def copy_image(
     remove_dest_tags: list[str] = (),
     additional_dest_tags: list[str] = (),
     dry_run: bool = False,
+    confirm: bool = False,
 ):
     try:
         dkr = DockerClient.from_env()
@@ -77,6 +83,13 @@ def copy_image(
 
     source_digest = source_image["imageDigest"]
     image = pull_image(dkr, source_repo, source_tag)
+    print(f"Source digest: {source_digest}")
+    print(f"Image ID:      {image.id}")
+    print(f"Image tags:    {image.tags}")
+    print(f"Labels:        {image.labels}")
+
+    if confirm and not click.confirm("Continue?"):
+        raise click.ClickException("Aborted.")
 
     dest_repo.login(dkr)
 
