@@ -62,6 +62,7 @@ def copy_image(
         raise click.ClickException(f"Failed to connect to Docker: {e}") from e
     source_repo = get_repo(source_repo_spec)
     dest_repo = get_repo(dest_repo_spec)
+    source_repo.login(dkr)
     images = source_repo.get_images()
     source_image = find_latest_image_with_tag(images, tag=source_tag)
 
@@ -76,6 +77,8 @@ def copy_image(
 
     source_digest = source_image["imageDigest"]
     image = pull_image(dkr, source_repo, source_tag)
+
+    dest_repo.login(dkr)
 
     for tag in dest_tags:
         dest_spec = f"{dest_repo.uri}:{tag}"

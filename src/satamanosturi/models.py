@@ -1,6 +1,8 @@
+import base64
 import dataclasses
 from functools import cached_property
 
+from docker import DockerClient
 from mypy_boto3_ecr import ECRClient
 
 
@@ -11,6 +13,9 @@ class Repo:
         ...
 
     def get_image(self, tag: str) -> dict:
+        ...
+
+    def login(self, dkr: DockerClient) -> None:
         ...
 
 
@@ -48,3 +53,16 @@ class ECRRepo(Repo):
         )[
             "imageDetails"
         ][0]
+
+    def login(self, dkr: DockerClient) -> None:
+        resp = self.ecr.get_authorization_token()
+        for token in resp["authorizationData"]:
+            auth_token = base64.b64decode(token["authorizationToken"]).decode()
+            username, _, password = auth_token.partition(":")
+            endpoint = token["proxyEndpoint"]
+            dkr.api.login(
+                username=username,
+                password=password,
+                registry=endpoint,
+            )
+            print(f"Logged in to {self.uri} ({endpoint})")
