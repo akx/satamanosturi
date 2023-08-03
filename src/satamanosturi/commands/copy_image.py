@@ -71,6 +71,8 @@ def copy_image(
     source_repo.login(dkr)
     images = source_repo.get_images()
     source_image = find_latest_image_with_tag(images, tag=source_tag)
+    if not source_image:
+        raise click.ClickException(f"No image found with tag {source_tag} from {images!r}")
 
     dest_tags = set(additional_dest_tags)
     if copy_tags:

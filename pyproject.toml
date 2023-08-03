@@ -27,6 +27,7 @@ dependencies = [
     "boto3-stubs[ecr]",
     "click",
     "docker",
+    "tqdm",
 ]
 
 [project.scripts]

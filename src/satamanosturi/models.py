@@ -2,6 +2,7 @@ import base64
 import dataclasses
 from functools import cached_property
 
+import tqdm
 from docker import DockerClient
 from mypy_boto3_ecr import ECRClient
 
@@ -37,14 +38,22 @@ class ECRRepo(Repo):
         ][0]
 
     def get_images(self) -> list[dict]:
-        return sorted(
-            self.ecr.describe_images(
-                repositoryName=self.name,
-                maxResults=100,
-            )["imageDetails"],
-            key=lambda image: image["imagePushedAt"],
-            reverse=True,
-        )
+        kwargs = {
+            "repositoryName": self.name,
+            "maxResults": 1000,
+            "filter": {"tagStatus": "TAGGED"},
+        }
+        images = []
+        with tqdm.tqdm(desc=f"Fetching images for {self.name}", unit="image") as progress:
+            while True:
+                image_page = self.ecr.describe_images(**kwargs)
+                page_images = image_page["imageDetails"]
+                images.extend(page_images)
+                progress.update(len(page_images))
+                if "nextToken" not in image_page:
+                    break
+                kwargs["nextToken"] = image_page["nextToken"]
+        return sorted(images, key=lambda image: image["imagePushedAt"], reverse=True)
 
     def get_image(self, tag: str):
         return self.ecr.describe_images(
