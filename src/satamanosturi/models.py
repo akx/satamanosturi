@@ -69,9 +69,10 @@ class ECRRepo(Repo):
             auth_token = base64.b64decode(token["authorizationToken"]).decode()
             username, _, password = auth_token.partition(":")
             registry = token["proxyEndpoint"].partition("://")[-1]
-            dkr.api.login(
+            res = dkr.api.login(
                 username=username,
                 password=password,
                 registry=registry,
+                reauth=True,
             )
-            print(f"Logged in to {self.uri} ({registry})")
+            print(f"{self.uri} ({registry}): {res}")
