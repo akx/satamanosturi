@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import click
-from docker import DockerClient
 
-from satamanosturi.docker import pull_image, push_image
+from satamanosturi.docker import get_docker_client, pull_image, push_image
 from satamanosturi.images import find_latest_image_with_tag
 from satamanosturi.repos import get_repo
 
@@ -62,8 +61,7 @@ def copy_image(
     confirm: bool = False,
 ):
     try:
-        dkr = DockerClient.from_env()
-        dkr.ping()
+        dkr = get_docker_client()
     except Exception as e:
         raise click.ClickException(f"Failed to connect to Docker: {e}") from e
     source_repo = get_repo(source_repo_spec)

@@ -27,3 +27,12 @@ def push_image(dkr: DockerClient, repo: Repo, tag: str) -> None:
     ):
         print(".", end="", flush=True)
     print()
+
+
+def get_docker_client() -> DockerClient:
+    dkr = DockerClient.from_env()
+    # Work around https://github.com/docker/docker-py/issues/3281...
+    dkr.api._auth_configs.pop("credsStore", None)
+    dkr.api._auth_configs.pop("credHelpers", None)
+    dkr.ping()
+    return dkr
