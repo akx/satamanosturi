@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import click
 
 from satamanosturi.docker import get_docker_client, pull_image, push_image
@@ -49,6 +51,11 @@ from satamanosturi.repos import get_repo
     default=False,
     help="Confirm interactively before pushing",
 )
+@click.option(
+    "--receipt-file",
+    type=click.File("w"),
+    help="Write a receipt JSON file with the details of the copied image",
+)
 def copy_image(
     *,
     source_repo_spec: str,
@@ -59,6 +66,7 @@ def copy_image(
     additional_dest_tags: list[str] = (),
     dry_run: bool = False,
     confirm: bool = False,
+    receipt_file=None,
 ):
     try:
         dkr = get_docker_client()
@@ -106,3 +114,22 @@ def copy_image(
         dest_image = dest_repo.get_image(tag)
         if dest_image["imageDigest"] != source_digest:
             raise RuntimeError(f"Digest mismatch for {tag}: {dest_image['imageDigest']} != {source_digest}")
+
+    if receipt_file:
+        receipt_data = {
+            "source": {
+                "repository": source_repo.uri,
+                "tag": source_tag,
+                "digest": source_digest,
+            },
+            "destination": {
+                "repository": dest_repo.uri,
+                "tags": list(dest_tags),
+            },
+            "image": {
+                "id": image.id,
+                "tags": image.tags,
+                "labels": image.labels,
+            }
+        }
+        json.dump(receipt_data, receipt_file, ensure_ascii=False, indent=2, sort_keys=True)
